@@ -1,0 +1,17 @@
+[package]
+edition = "2021"
+license = "AGPL-3.0-or-later"
+name = "rustshift"
+version = "0.1.0"
+
+[dependencies]
+bytemuck = "1"
+nix = { version = "0.27", features = ["fs"] }
+signal-hook = "0.3"
+time = { version = "0.3", features = ["local-offset"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+tz-rs = "0.6"
+wayland-client = { version = "0.31", features = ["log"] }
+wayland-protocols-wlr = { version = "0.2", features = ["client"] }
+zbus = "3"
