@@ -1,6 +1,8 @@
+use std::num::NonZeroU32;
+
 use crate::util::lerp;
 
-pub type Temperature = u32;
+pub type Temperature = NonZeroU32;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Config {
@@ -11,10 +13,10 @@ pub struct Config {
 }
 
 impl Config {
-	pub fn new(temperature: Temperature, brightness: f32) -> Option<Self> {
+	pub fn new(temperature: u32, brightness: f32) -> Option<Self> {
 		if (1000..=25000).contains(&temperature) && (0.0..=1.0).contains(&brightness) {
 			Some(Self {
-				temperature,
+				temperature: temperature.try_into().ok()?,
 				brightness,
 			})
 		} else {
@@ -23,12 +25,21 @@ impl Config {
 	}
 
 	pub fn different_from(self, other: Self) -> bool {
-		self.temperature.abs_diff(other.temperature) > 30
+		self.temperature.get().abs_diff(other.temperature.get()) > 30
 			|| (self.brightness - other.brightness).abs() > 0.01
 	}
 }
 
-const NEUTRAL_TEMPERATURE: Temperature = 6500;
+macro_rules! const_unwrap {
+	($x:expr) => {
+		match $x {
+			Some(x) => x,
+			None => panic!("const unwrap failed"),
+		}
+	};
+}
+
+const NEUTRAL_TEMPERATURE: Temperature = const_unwrap!(NonZeroU32::new(6500));
 
 impl Default for Config {
 	fn default() -> Self {
@@ -79,7 +90,7 @@ impl Ramps {
 impl Config {
 	pub fn generate_ramps(self, ramps: &mut Ramps) {
 		// We have already checked that `self.temperature` is in the valid range.
-		let white_point = get_white_point(self.temperature).unwrap();
+		let white_point = get_white_point(self.temperature.get()).unwrap();
 		let pure_step = 1.0 / ramps.ramp_size() as f32;
 		for (i, [r, g, b]) in ramps.iter_rgb_mut().enumerate() {
 			let pure = i as f32 * pure_step * self.brightness;
