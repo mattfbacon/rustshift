@@ -10,10 +10,14 @@ pub fn lerp(from: f32, to: f32, t: f32) -> f32 {
 /// Returns the proxy along with its "name" (as given by `wl_registry::Event::Global`) if it was found.
 ///
 /// Any events from the proxy will be ignored.
-pub fn get_proxy<T: Proxy + 'static>(connection: &Connection) -> Option<(u32, T)> {
+pub fn get_proxy<T: Proxy + 'static>(
+	connection: &Connection,
+	minimum_version: u32,
+) -> Option<(u32, T)> {
 	struct Helper<T> {
 		slot: Option<(u32, T)>,
 		ignored_handle: QueueHandle<Ignored>,
+		minimum_version: u32,
 	}
 
 	impl<T: Proxy + 'static> Dispatch<wl_registry::WlRegistry, ()> for Helper<T> {
@@ -32,7 +36,7 @@ pub fn get_proxy<T: Proxy + 'static>(connection: &Connection) -> Option<(u32, T)
 					version: _,
 				} => {
 					if interface == T::interface().name {
-						let proxy = registry.bind(name, T::interface().version, &state.ignored_handle, ());
+						let proxy = registry.bind(name, state.minimum_version, &state.ignored_handle, ());
 						state.slot = Some((name, proxy));
 					}
 				}
@@ -58,6 +62,7 @@ pub fn get_proxy<T: Proxy + 'static>(connection: &Connection) -> Option<(u32, T)
 	let mut helper = Helper {
 		slot: None,
 		ignored_handle: connection.new_event_queue().handle(),
+		minimum_version,
 	};
 	queue.roundtrip(&mut helper).unwrap();
 	helper.slot

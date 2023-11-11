@@ -5,7 +5,7 @@ use std::sync::mpsc::SyncSender;
 
 use nix::sys::memfd::{memfd_create, MemFdCreateFlag};
 use wayland_client::protocol::{wl_output, wl_registry};
-use wayland_client::{delegate_noop, Connection, Dispatch, Proxy, QueueHandle};
+use wayland_client::{delegate_noop, Connection, Dispatch, QueueHandle};
 use wayland_protocols_wlr::gamma_control::v1::client::{
 	zwlr_gamma_control_manager_v1, zwlr_gamma_control_v1,
 };
@@ -29,6 +29,10 @@ struct Helper {
 	done: bool,
 }
 
+// Minimum versions
+const WL_OUTPUT_VERSION: u32 = 4;
+const ZWLR_GAMMA_CONTROL_MANAGER_V1_VERSION: u32 = 1;
+
 impl Dispatch<wl_registry::WlRegistry, ()> for Helper {
 	fn event(
 		state: &mut Self,
@@ -45,7 +49,7 @@ impl Dispatch<wl_registry::WlRegistry, ()> for Helper {
 				version: _,
 			} => {
 				if interface == "wl_output" {
-					let output = registry.bind(name, wl_output::WlOutput::interface().version, handle, ());
+					let output = registry.bind(name, WL_OUTPUT_VERSION, handle, ());
 					let control = state
 						.gamma_control_manager
 						.get_gamma_control(&output, handle, ());
@@ -141,7 +145,9 @@ pub fn monitor_outputs(event_send: SyncSender<Event>, connection: &Connection) {
 	let _registry = connection.display().get_registry(&handle, ());
 
 	let mut helper = Helper {
-		gamma_control_manager: get_proxy(connection).unwrap().1,
+		gamma_control_manager: get_proxy(connection, ZWLR_GAMMA_CONTROL_MANAGER_V1_VERSION)
+			.unwrap()
+			.1,
 		event_send,
 		intermediates: Vec::new(),
 		done: false,
