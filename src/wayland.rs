@@ -161,9 +161,19 @@ pub struct GammaControl {
 
 impl std::fmt::Debug for GammaControl {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		// Ensure exhaustiveness.
+		let Self {
+			output_registry_name,
+			output_description,
+			proxy: _,
+			ramps: _,
+			last_config,
+		} = self;
+
 		f.debug_struct("GammaControl")
-			.field("output_registry_name", &self.output_registry_name)
-			.field("proxy", &self.proxy)
+			.field("output_registry_name", output_registry_name)
+			.field("output_description", output_description)
+			.field("last_config", last_config)
 			.finish_non_exhaustive()
 	}
 }
