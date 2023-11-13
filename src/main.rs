@@ -148,7 +148,7 @@ fn main() {
 			Event::RemoveOutput {
 				output_registry_name: output_id,
 			} => {
-				gamma_controls.retain(|control| control.is_for_output(output_id));
+				gamma_controls.retain(|control| !control.is_for_output(output_id));
 				// No need to update the other outputs.
 				continue;
 			}
