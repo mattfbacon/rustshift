@@ -25,7 +25,7 @@ impl Config {
 	}
 
 	pub fn different_from(self, other: Self) -> bool {
-		self.temperature.get().abs_diff(other.temperature.get()) > 30
+		self.temperature.get().abs_diff(other.temperature.get()) > 10
 			|| (self.brightness - other.brightness).abs() > 0.01
 	}
 }
